@@ -26,4 +26,22 @@ const checkAccess = (role, status) => {
     };
 };
 
-module.exports = { checkAccess };
+
+function authMidle(req, res, next) {
+    let token = req.header("Authorization")?.split(" ")[1];
+    if (!token) {
+        res.status(401).send({ message: "Token not provided" });
+        return;
+    }
+    try {
+        let data = jwt.verify(token, "stakan");
+        req.user = data.id;
+        next();
+    } catch (error) {
+        console.log(error);
+        res.status(401).send("xato");
+    }
+}
+
+
+module.exports = { checkAccess, authMidle};

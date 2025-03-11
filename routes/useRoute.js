@@ -6,7 +6,10 @@ const {
     verifyOtp,
     registerUser,
     loginUser,
+    refreshtoken,
 } = require("../controller/userController");
+const { authMidle } = require("../middleware/midle");
+const res = require("express/lib/response");
 
 /**
  * @swagger
@@ -221,5 +224,7 @@ router.post("/register", registerUser);
  */
 
 router.post("/login", loginUser);
+
+router.post("/refresh-token", refreshtoken)
 
 module.exports = router;

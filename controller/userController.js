@@ -1,16 +1,32 @@
 const User = require("../models/userModel");
 const bcrypt = require("bcrypt");
 const { totp } = require("otplib");
-const { db } = require("../config/db");
 const sendSms = require("../config/eskiz");
 const { sendEmail } = require("../config/nodemailer");
 const { validateUser } = require("../validation/userValid");
 const jwt = require("jsonwebtoken");
 
-async function findUser(phone) {
+async function accessTokenCreate(bazaUser) {
     try {
-        const newUser = await User.findOne({ where: { phone } });
-        return newUser;
+        const token = await jwt.sign(
+            { id: bazaUser.id, role: bazaUser.role, status: bazaUser.status, role: bazaUser.role},
+            "stakan",
+            { expiresIn: "10m" }
+        );
+        return token;
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+async function RefreshTokenCreate(bazaUser) {
+    try {
+        const token = await jwt.sign(
+            { id: bazaUser.id, password: bazaUser.password, role: bazaUser.role },
+            "ref-stakan",
+            { expiresIn: "7d" }
+        );
+        return token;
     } catch (error) {
         console.log(error);
     }
@@ -105,16 +121,36 @@ const loginUser = async (req, res) => {
 
         await bazaUser.update({ status: "Activited" });
 
-        const token = jwt.sign(
-            { id: bazaUser.id, role: bazaUser.role, status: bazaUser.status },
-            "stakan"
-        );
+        const token = await accessTokenCreate(bazaUser);
 
-        res.send({ message: "Login successful", token });
+        const refToken = await RefreshTokenCreate(bazaUser);
+
+        res.send({ message: "Login successful", token, refToken });
     } catch (error) {
         console.log(error);
         res.status(500).send("Error in login!");
     }
 };
 
-module.exports = { resentotp, verifyOtp, registerUser, loginUser };
+
+
+const refreshtoken = async (req, res) => {
+    const { reftoken } = req.body;
+    try {
+        let data = jwt.verify(reftoken, "ref-stakan");
+        if (!data) {
+            res.send({ message: "not valid !" });
+            return;
+        }
+        let token_access = await accessTokenCreate(data)
+        console.log(data);
+        
+        
+        res.send({token_access})
+    } catch (error) {
+        console.log(error);
+        res.status(401).send({ message: "error in refresh token !" });
+    }
+};
+
+module.exports = { resentotp, verifyOtp, registerUser, loginUser, refreshtoken};
