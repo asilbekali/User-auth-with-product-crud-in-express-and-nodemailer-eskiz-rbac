@@ -1,6 +1,6 @@
 const Product = require("../models/proModel");
 
-const createProductImg = async (req, res) => {
+const createProductImg = async (req, res, next) => {
     try {
         const { name, desc, price } = req.body;
         const file = req.file;
@@ -22,6 +22,7 @@ const createProductImg = async (req, res) => {
             message: "Product created successfully",
             data: newProduct,
         });
+        next()
     } catch (error) {
         res.status(500).json({
             message: "Error creating product",
@@ -30,9 +31,10 @@ const createProductImg = async (req, res) => {
     }
 };
 
-const creatPro = async (req, res) => {
+const creatPro = async (req, res, next) => {
     try {
         const { name, price, desc, imgUrl } = req.body;
+        
         const newPro = await Product.create({
             name: name,
             price: price,
@@ -40,16 +42,18 @@ const creatPro = async (req, res) => {
             imgUrl: "no img",
         });
         res.status(201).send(newPro);
+        next()
     } catch (error) {
         res.send("Creat product error !\n\n");
         console.log(error);
     }
 };
 
-const getAllProducts = async (req, res) => {
+const getAllProducts = async (req, res, next) => {
     try {
         const products = await Product.findAll();
         res.status(200).json({ Maxsulotlar: products });
+        next()
     } catch (error) {
         res.status(500).json({
             message: "Error fetching products",
@@ -58,7 +62,7 @@ const getAllProducts = async (req, res) => {
     }
 };
 
-const getProductById = async (req, res) => {
+const getProductById = async (req, res, next) => {
     const { id } = req.params;
 
     try {
@@ -67,6 +71,7 @@ const getProductById = async (req, res) => {
             return res.status(404).json({ message: "Product not found" });
         }
         res.status(200).json({ data: product });
+        next()
     } catch (error) {
         res.status(500).json({
             message: "Error fetching product",
@@ -75,7 +80,7 @@ const getProductById = async (req, res) => {
     }
 };
 
-const updateProduct = async (req, res) => {
+const updateProduct = async (req, res, next) => {
     const { id } = req.params;
     const { name, desc, price, imgUrl } = req.body;
 
@@ -95,6 +100,7 @@ const updateProduct = async (req, res) => {
             message: "Product updated successfully",
             data: product,
         });
+        next()
     } catch (error) {
         res.status(500).json({
             message: "Error updating product",
@@ -103,7 +109,7 @@ const updateProduct = async (req, res) => {
     }
 };
 
-const deleteProduct = async (req, res) => {
+const deleteProduct = async (req, res, next) => {
     const { id } = req.params;
     try {
         const product = await Product.findByPk(id);
@@ -113,6 +119,7 @@ const deleteProduct = async (req, res) => {
 
         await product.destroy();
         res.status(200).json({ message: "Product deleted successfully" });
+        next()
     } catch (error) {
         res.status(500).json({
             message: "Error deleting product",

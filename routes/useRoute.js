@@ -1,5 +1,12 @@
 const { Router } = require("express");
 const router = Router();
+const {
+    loginLoger,
+    resentOtpLoger,
+    verifyOtpLoger,
+    accessRefreshTokenLoger,
+    sendSmsandEmailLoger,
+} = require("../logger");
 
 const {
     resentotp,
@@ -8,8 +15,7 @@ const {
     loginUser,
     refreshtoken,
 } = require("../controller/userController");
-const { authMidle } = require("../middleware/midle");
-const res = require("express/lib/response");
+const { registerLoger } = require("../logger");
 
 /**
  * @swagger
@@ -54,7 +60,9 @@ const res = require("express/lib/response");
  *
  */
 
-router.post("/resent-otp", resentotp);
+router.post("/resent-otp", resentotp, () => {
+    resentOtpLoger("info", "otipi qaytadan jonatildi");
+});
 
 /**
  * @swagger
@@ -91,7 +99,9 @@ router.post("/resent-otp", resentotp);
  *         description: Error in verifying OTP.
  */
 
-router.post("/verifiy-otp", verifyOtp);
+router.post("/verifiy-otp", verifyOtp, () => {
+    verifyOtpLoger("info", "tekshirildi verify orqalik tokeni");
+});
 
 /**
  * @swagger
@@ -145,7 +155,14 @@ router.post("/verifiy-otp", verifyOtp);
  *         description: Error in user registration.
  */
 
-router.post("/register", registerUser);
+router.post("/register", registerUser, () => {
+    registerLoger.log("info", "user royatdan otdi"),
+        accessRefreshTokenLoger.log(
+            "info",
+            "access token and refresh token created"
+        ),
+        sendSmsandEmailLoger.log("info", "otp sent sms and email");
+});
 
 /**
  * @swagger
@@ -223,8 +240,13 @@ router.post("/register", registerUser);
  *
  */
 
-router.post("/login", loginUser);
+router.post("/login", loginUser, (req, res) => {
+    loginLoger.log("info", "user royxatdan otdi");
+    console.log("ishladi");
+});
 
-router.post("/refresh-token", refreshtoken)
+router.post("/refresh-token", refreshtoken, () => {
+    refreshtoken.log("info", "refresh token");
+});
 
 module.exports = router;

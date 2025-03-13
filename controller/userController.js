@@ -5,11 +5,17 @@ const sendSms = require("../config/eskiz");
 const { sendEmail } = require("../config/nodemailer");
 const { validateUser } = require("../validation/userValid");
 const jwt = require("jsonwebtoken");
+const { logger } = require("../logger");
 
 async function accessTokenCreate(bazaUser) {
     try {
         const token = await jwt.sign(
-            { id: bazaUser.id, role: bazaUser.role, status: bazaUser.status, role: bazaUser.role},
+            {
+                id: bazaUser.id,
+                role: bazaUser.role,
+                status: bazaUser.status,
+                role: bazaUser.role,
+            },
             "stakan",
             { expiresIn: "10m" }
         );
@@ -22,7 +28,11 @@ async function accessTokenCreate(bazaUser) {
 async function RefreshTokenCreate(bazaUser) {
     try {
         const token = await jwt.sign(
-            { id: bazaUser.id, password: bazaUser.password, role: bazaUser.role },
+            {
+                id: bazaUser.id,
+                password: bazaUser.password,
+                role: bazaUser.role,
+            },
             "ref-stakan",
             { expiresIn: "7d" }
         );
@@ -37,32 +47,35 @@ totp.options = {
     step: 30000,
 };
 
-const resentotp = async (req, res) => {
+const resentotp = async (req, res, next) => {
     const { phone, email } = req.body;
     const otp = totp.generate(email + "test");
     await sendSms(phone, otp);
     await sendEmail(email, otp);
 
     res.send(otp);
+    next();
     try {
     } catch (error) {
         console.log(error);
     }
 };
 
-const verifyOtp = async (req, res) => {
+const verifyOtp = async (req, res, next) => {
     const { email, otp } = req.body;
     console.log(otp);
     try {
         const match = totp.verify({ token: otp, secret: email + "test" });
         res.send(match);
+        next();
     } catch (error) {
         console.log(error);
         res.send(error);
     }
 };
 
-const registerUser = async (req, res) => {
+const registerUser = async (req, res, next) => {
+    const registerLoger = logger.child({ module: "register" });
     try {
         const { error, value } = validateUser(req.body);
         if (error) {
@@ -92,13 +105,14 @@ const registerUser = async (req, res) => {
         await sendEmail(email, otp);
         console.log(otp);
         res.send(user);
+        next();
     } catch (error) {
         console.log(error);
         res.send("error in register");
     }
 };
 
-const loginUser = async (req, res) => {
+const loginUser = async (req, res, next) => {
     const { password, phone, email, otp } = req.body;
     try {
         let match = totp.verify({ token: otp, secret: email + "stakan" });
@@ -126,15 +140,14 @@ const loginUser = async (req, res) => {
         const refToken = await RefreshTokenCreate(bazaUser);
 
         res.send({ message: "Login successful", token, refToken });
+        next();
     } catch (error) {
         console.log(error);
         res.status(500).send("Error in login!");
     }
 };
 
-
-
-const refreshtoken = async (req, res) => {
+const refreshtoken = async (req, res, next) => {
     const { reftoken } = req.body;
     try {
         let data = jwt.verify(reftoken, "ref-stakan");
@@ -142,15 +155,21 @@ const refreshtoken = async (req, res) => {
             res.send({ message: "not valid !" });
             return;
         }
-        let token_access = await accessTokenCreate(data)
+        let token_access = await accessTokenCreate(data);
         console.log(data);
-        
-        
-        res.send({token_access})
+
+        res.send({ token_access });
+        next();
     } catch (error) {
         console.log(error);
         res.status(401).send({ message: "error in refresh token !" });
     }
 };
 
-module.exports = { resentotp, verifyOtp, registerUser, loginUser, refreshtoken};
+module.exports = {
+    resentotp,
+    verifyOtp,
+    registerUser,
+    loginUser,
+    refreshtoken,
+};

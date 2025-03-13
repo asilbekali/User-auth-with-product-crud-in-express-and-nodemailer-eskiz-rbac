@@ -2,6 +2,11 @@ const { Router } = require("express");
 const router = Router();
 const { checkAccess } = require("../middleware/midle");
 const upload = require("../multer/maltr");
+const {
+    deleteProProLoger,
+    updateProLoger,
+    getOneIdProProLoger,
+} = require("../logger");
 
 const {
     creatPro,
@@ -11,8 +16,9 @@ const {
     updateProduct,
     deleteProduct,
 } = require("../controller/proController");
-router.post("/product", checkAccess(["admin"], ["Activated"]), creatPro);
-
+router.post("/product", checkAccess(["admin"], ["Activated"]), creatPro, () => {
+    createProLoger("info", "product created");
+});
 
 /**
  * @swagger
@@ -55,7 +61,10 @@ router.post(
     "/productImg",
     checkAccess(["admin"], ["Activated"]),
     upload.single("file"),
-    createProductImg
+    createProductImg,
+    () => {
+        createProLoger("info", "product created");
+    }
 );
 
 /**
@@ -87,7 +96,9 @@ router.post(
  *       500:
  *         description: Error fetching products
  */
-router.get("/getAllPro", getAllProducts);
+router.get("/getAllPro", getAllProducts, () => {
+    getOneIdProProLoger("info", "get all products");
+});
 
 /**
  * @swagger
@@ -124,7 +135,9 @@ router.get("/getAllPro", getAllProducts);
  *       500:
  *         description: Error fetching product
  */
-router.get("/getPro/:id", getProductById);
+router.get("/getPro/:id", getProductById, () => {
+    getOneIdProProLoger("info", "get product with id");
+});
 
 /**
  * @swagger
@@ -164,7 +177,10 @@ router.get("/getPro/:id", getProductById);
 router.patch(
     "/updatePro/:id",
     checkAccess(["admin", "super-admin"], ["Activated"]),
-    updateProduct
+    updateProduct,
+    () => {
+        updateProLoger("info", "updated product");
+    }
 );
 
 /**
@@ -190,7 +206,12 @@ router.patch(
 router.delete(
     "/delPro/:id",
     checkAccess(["admin"], ["Activated"]),
-    deleteProduct
+    deleteProduct,
+    () => {
+        deleteProProLoger("info", "deleted product");
+    }
 );
 
 module.exports = router;
+
+
